@@ -5,7 +5,6 @@ import java.util.Scanner;
 import java.util.stream.Collectors;
 interface Configuration {
     void displayInfo();
-    double calculateCost();
 }
 abstract class Publication implements Configuration {
     private int id;
@@ -26,7 +25,6 @@ abstract class Publication implements Configuration {
         System.out.println("ID: " + id );
         System.out.println("Title: " + title);
     }
-    public abstract double calculateCost();
 }
 class Book extends Publication {
     private String author;
@@ -59,12 +57,6 @@ class Book extends Publication {
         System.out.println("Year: " + year);
         System.out.println("Popularity Count: " + popularityCount);
         System.out.println("Price: $" + price);
-    }
-    @Override
-    public double calculateCost(){
-        double bookCost = getPrice();
-        double gst = (0.2 * bookCost);
-        return (bookCost + gst + 200);
     }
 }
 class Borrower {
@@ -99,51 +91,8 @@ class Borrower {
         borrowedItems.remove(Integer.valueOf(itemId));
     }
 }
-class LibraryItem extends Publication {
-    private boolean isBorrowed;
-    private int borrowerId;
-    private int popularityCount;
-    private double cost;
-    public LibraryItem(int id, String title, int popularityCount, double cost) {
-        super(id, title);
-        this.popularityCount = popularityCount;
-        this.cost=cost;
-    }
-    public boolean isBorrowed() {
-        return isBorrowed;
-    }
-    public void setBorrowed(boolean borrowed) {
-        isBorrowed = borrowed;
-    }
-    public int getBorrowerId() {
-        return borrowerId;
-    }
-    public void setBorrowerId(int borrowerId) {
-        this.borrowerId = borrowerId;
-    }
-    public int getPopularityCount() {
-        return popularityCount;
-    }
-    public void setPopularityCount(int popularityCount) {
-        this.popularityCount = popularityCount;
-    }
-    @Override
-    public double calculateCost() {
-
-        return cost;
-    }
-}
 class Library {
     private List<Publication> publications = new ArrayList<>();
-    private List<LibraryItem> libraryItems = new ArrayList<>();
-    private List< Borrower> borrowers;
-    public Library() {
-        libraryItems = new ArrayList<>();
-        borrowers = new ArrayList<>();
-    }
-    public List<Borrower> getBorrowers() {
-        return borrowers;
-    }
     public void addPublication(Publication publication) {
         publications.add(publication);
     }
@@ -184,78 +133,6 @@ class Library {
         }
         return null;
     }
-    public void addLibraryItem(LibraryItem item) {
-        libraryItems.add(item);
-    }
-    public void addBorrower(Borrower borrower) {
-        borrowers.add(borrower);
-    }
-    public void borrowItem(int userId, int itemId) {
-        Borrower borrower = findBorrower(userId);
-        LibraryItem item = findLibraryItem(itemId);
-
-        if (borrower != null && item != null && !item.isBorrowed()) {
-            borrower.borrowItem(itemId);
-            item.setBorrowed(true);
-            item.setBorrowerId(userId);
-            // Increase popularity count when an item is borrowed
-            item.setPopularityCount(item.getPopularityCount() + 1);
-        }
-    }
-    public void returnItem(int userId, int itemId) {
-        Borrower borrower = findBorrower(userId);
-        LibraryItem item = findLibraryItem(itemId);
-        if (borrower != null && item != null && borrower.getBorrowedItems().contains(itemId)) {
-            borrower.returnItem(itemId);
-            item.setBorrowed(false);
-            item.setBorrowerId(0);
-        }
-    }
-    public void updatePopularityCount(int itemId, int popularityCount) {
-        LibraryItem item = findLibraryItem(itemId);
-        if (item != null) {
-            item.setPopularityCount(popularityCount);
-        }
-    }
-    public void displayBorrowers() {
-        for (Borrower borrower : borrowers) {
-            System.out.println("---------------");
-            System.out.println("Borrower ID: " + borrower.getUserId());
-            System.out.println("Borrower Name: " + borrower.getName());
-            List<String> borrowedItemTitles = borrower.getBorrowedItems().stream()
-                    .map(itemId -> findLibraryItem(itemId).getTitle())
-                    .collect(Collectors.toList());
-            System.out.println("Borrowed Items: " + String.join(", ", borrowedItemTitles));
-            System.out.println();
-        }
-    }
-    public void displayHotPicks() {
-        List<LibraryItem> hotPicks = libraryItems.stream()
-                .sorted((item1, item2) -> Integer.compare(item2.getPopularityCount(), item1.getPopularityCount()))
-                .collect(Collectors.toList());
-
-        System.out.println("Hot Picks:");
-        for (LibraryItem item : hotPicks) {
-            System.out.println("---------------");
-            System.out.println("Title: " + item.getTitle());
-            System.out.println("Popularity Count: " + item.getPopularityCount());
-            System.out.println();
-        }
-    }
-    public Borrower findBorrower(int userId) {
-        return borrowers.stream()
-                .filter(borrower -> borrower.getUserId() == userId)
-                .findFirst()
-                .orElse(null);
-    }
-    public LibraryItem findLibraryItem(int itemId) {
-        for (LibraryItem item : libraryItems) {
-            if (item.getId() == itemId) {
-                return item;
-            }
-        }
-        return null;
-    }
 }
 public class LibraryManagementSystem {
     public static void main(String[] args) {
@@ -271,10 +148,6 @@ public class LibraryManagementSystem {
             System.out.println("3. Delete a Publication");
             System.out.println("4. View All Publications");
             System.out.println("5. View Publication by ID");
-            System.out.println("6. Hot Picks!");
-            System.out.println("7. Borrow an Item");
-            System.out.println("8. Return Book");
-            System.out.println("9. View Borrowers List");
             System.out.println("10. Exit");
             System.out.print("Enter your choice: ");
             choice = scanner.nextInt();
@@ -301,22 +174,6 @@ public class LibraryManagementSystem {
                     Publication publicationToView = library.getPublicationById(idToView);
                     library.displayPublicationDetails(publicationToView);
                     break;
-                case 6:
-                    // Display Hot Picks
-                    library.displayHotPicks();
-                    break;
-                case 7:
-                    // Borrow a book
-                    borrowBook(scanner, library);
-                    break;
-                case 8:
-                    // Return a book
-                    returnBook(scanner, library);
-                    break;
-                case 9:
-                    // Display Borrowers
-                    library.displayBorrowers();
-                    break;
                 case 10:
                     // Exit
                     System.out.println("Exiting Library Management System.");
@@ -333,24 +190,23 @@ public class LibraryManagementSystem {
         String title = scanner.nextLine();
         // Prepare data to write to the file
         String dataToWrite = null;
-            // Book
-            System.out.print("Enter Author: ");
-            String author = scanner.nextLine();
-            System.out.print("Enter Year: ");
-            int year = scanner.nextInt();
-            System.out.print("Enter Popularity Count: ");
-            int popularityCount = scanner.nextInt();
-            System.out.print("Enter Price: ");
-            int price = scanner.nextInt();
-            int nextId = library.getAllPublications().size() + 1;
-            Book newBook = new Book(nextId, title, author, year, popularityCount, price);
-            library.addPublication(newBook);
-            double newcost = newBook.calculateCost();
-            // Create a formatted string to write to the file
-            dataToWrite = String.format("%d, %s, %s, %d, %d, %d",
-                    nextId, title, author, year, popularityCount, price);
-            System.out.println(dataToWrite);
-            System.out.println("Book added successfully.");
+        // Book
+        System.out.print("Enter Author: ");
+        String author = scanner.nextLine();
+        System.out.print("Enter Year: ");
+        int year = scanner.nextInt();
+        System.out.print("Enter Popularity Count: ");
+        int popularityCount = scanner.nextInt();
+        System.out.print("Enter Price: ");
+        int price = scanner.nextInt();
+        int nextId = library.getAllPublications().size() + 1;
+        Book newBook = new Book(nextId, title, author, year, popularityCount, price);
+        library.addPublication(newBook);
+        // Create a formatted string to write to the file
+        dataToWrite = String.format("%d, %s, %s, %d, %d, %d",
+                nextId, title, author, year, popularityCount, price);
+        System.out.println(dataToWrite);
+        System.out.println("Book added successfully.");
         // Write the data to the file
         writeDataToFile(dataToWrite);
     }
@@ -491,60 +347,6 @@ public class LibraryManagementSystem {
             publication.displayInfo();
         }
     }
-    private static void borrowBook(Scanner scanner, Library library) {
-        System.out.print("Enter the ID of the book you want to borrow: ");
-        int bookId = scanner.nextInt();
-        // Check if the book exists in the library
-        LibraryItem bookToBorrow = library.findLibraryItem(bookId);
-        System.out.println(bookToBorrow.getTitle());
-        if (bookToBorrow == null) {
-            System.out.println("Book not found.");
-            return;
-        }
-        // Check if the book is already borrowed
-        if (bookToBorrow.isBorrowed()) {
-            System.out.println("This book is already borrowed by another user.");
-            return;
-        }
-        // Borrow the book
-        System.out.print("Enter your name: ");
-        String userName = scanner.next();
-        Borrower borrower = new Borrower();
-        borrower.setName(userName);
-        borrower.setUserId(library.getBorrowers().size() + 1); // Generate a unique user ID
-        library.addBorrower(borrower);
-        bookToBorrow.setPopularityCount(bookToBorrow.getPopularityCount());
-        library.borrowItem(borrower.getUserId(), bookId);
-        double cost = bookToBorrow.calculateCost();
-        System.out.println(userName + ", you have successfully borrowed the book: " + bookToBorrow.getTitle());
-        System.out.println("Cost: $" + cost);
-    }
-    private static void returnBook(Scanner scanner, Library library) {
-        System.out.print("Enter your User ID: ");
-        int userId = scanner.nextInt();
-        // Check if the user exists in the library
-        Borrower borrower = library.findBorrower(userId);
-        if (borrower == null) {
-            System.out.println("User not found. Please register as a borrower first.");
-            return;
-        }
-        System.out.print("Enter the ID of the book you want to return: ");
-        int bookId = scanner.nextInt();
-        // Check if the book exists in the library
-        LibraryItem bookToReturn = library.findLibraryItem(bookId);
-        if (bookToReturn == null) {
-            System.out.println("Book not found.");
-            return;
-        }
-        // Check if the user has borrowed this book
-        if (!borrower.getBorrowedItems().contains(bookId)) {
-            System.out.println(borrower.getName() + ", you haven't borrowed this book.");
-            return;
-        }
-        // Return the book
-        library.returnItem(userId, bookId);
-        System.out.println(borrower.getName() + ", you have successfully returned the book: " + bookToReturn.getTitle());
-    }
     private static void loadDataFromFile(Library library) {
         String filePath = "data.txt";
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
@@ -561,19 +363,14 @@ public class LibraryManagementSystem {
                 }
                 String title = parts[1];
                 //String type = parts[2];
-                    int popularityCount = Integer.parseInt(parts[parts.length - 2]);
-                    int price = Integer.parseInt(parts[parts.length - 1]);
-                    double newcost=(price+(0.2*price)+200);
-                    LibraryItem libraryItem = new LibraryItem(id, title, popularityCount,newcost);
-                    library.addLibraryItem(libraryItem);
-                    String author = parts[2];
-                    int year = Integer.parseInt(parts[3]);
-                    int popularityCount2 = Integer.parseInt(parts[4]);
-                    int price2 = Integer.parseInt(parts[5]);
-                    // Create and add the book to the library
-                    int nextId = library.getAllPublications().size() + 1;
-                    Book book = new Book(nextId, title, author, year, popularityCount2, price2);
-                    library.addPublication(book);
+                int popularityCount = Integer.parseInt(parts[parts.length - 2]);
+                int price = Integer.parseInt(parts[parts.length - 1]);
+                String author = parts[2];
+                int year = Integer.parseInt(parts[3]);
+                // Create and add the book to the library
+                int nextId = library.getAllPublications().size() + 1;
+                Book book = new Book(nextId, title, author, year, popularityCount, price);
+                library.addPublication(book);
             }
         } catch (IOException e) {
             e.printStackTrace();
