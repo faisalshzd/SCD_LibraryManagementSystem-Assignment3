@@ -1,0 +1,5 @@
+1, book_title, author_name, 1950, 3, 200
+2, novel_title, author4_name, 1985, 2, 350
+3, self-help_book, author9_name, 2005, 1, 250
+4, book13, author13, 2019, 1, 123
+5, book90, author90, 2019, 3, 230
