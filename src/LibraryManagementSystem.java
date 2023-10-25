@@ -1,8 +1,14 @@
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.*;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
 interface Configuration {
     void displayInfo();
 }
@@ -59,57 +65,15 @@ class Book extends Publication {
         System.out.println("Price: $" + price);
     }
 }
-class Borrower {
-    private int userId;
-    private String name;
-    private List<Integer> borrowedItems; // Store item IDs of borrowed items
-    public Borrower() {
-        borrowedItems = new ArrayList<>(); // Initialize the list here
-    }
-    public int getUserId() {
-        return userId;
-    }
-    public void setUserId(int userId) {
-        this.userId = userId;
-    }
-    public String getName() {
-        return name;
-    }
-    public void setName(String name) {
-        this.name = name;
-    }
-    public List<Integer> getBorrowedItems() {
-        return borrowedItems;
-    }
-    public void setBorrowedItems(List<Integer> borrowedItems) {
-        this.borrowedItems = borrowedItems;
-    }
-    public void borrowItem(int itemId) {
-        borrowedItems.add(itemId);
-    }
-    public void returnItem(int itemId) {
-        borrowedItems.remove(Integer.valueOf(itemId));
-    }
-}
 class Library {
     private List<Publication> publications = new ArrayList<>();
     public void addPublication(Publication publication) {
         publications.add(publication);
     }
-
     public boolean editPublication(int id, Publication newPublication) {
         for (int i = 0; i < publications.size(); i++) {
             if (publications.get(i).getId() == id) {
                 publications.set(i, newPublication);
-                return true;
-            }
-        }
-        return false;
-    }
-    public boolean deletePublication(int id) {
-        for (Publication publication : publications) {
-            if (publication.getId() == id) {
-                publications.remove(publication);
                 return true;
             }
         }
@@ -134,118 +98,287 @@ class Library {
         return null;
     }
 }
+class PopularityChartFrame extends JFrame {
+    private final int[] popularityData;
+    private final String[] bookNames;
+    public PopularityChartFrame(int[] popularityData, String[] bookNames) {
+        this.popularityData = popularityData;
+        this.bookNames = bookNames;
+        setTitle("Popularity Chart");
+        setSize(800, 600);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    }
+    @Override
+    public void paint(Graphics g) {
+        super.paint(g);
+        int x = 50; // Initial X position
+        int barWidth = 40; // Width of each bar
+        int maxHeight = 500; // Maximum height for the bars (adjust as needed)
+        // Calculate the maximum popularity count
+        int maxPopularity = Arrays.stream(popularityData).max().orElse(0);
+        // Draw Y-axis and labels
+        g.drawLine(x, 50, x, getHeight() - 50); // Y-axis
+        g.drawLine(x - 5, 50, x + 5, 50); // Y-axis endpoint
+        g.drawString("Popularity Count", x - 60, 30);
+        // Calculate the number of divisions on the Y-axis
+        int numDivisions = maxPopularity + 1; // Each division represents a step of 1
+        for (int i = 0; i < numDivisions; i++) {
+            int y = getHeight() - (i * (maxHeight / numDivisions)) - 50;
+            g.drawString(Integer.toString(i), x - 30, y + 5); // Y-axis labels
+        }
+        // Draw X-axis and labels
+        g.drawLine(x, getHeight() - 50, x + (popularityData.length * 60), getHeight() - 50); // X-axis
+        for (int i = 0; i < popularityData.length; i++) {
+            int barHeight = (int) (maxHeight * (popularityData[i] / (double) maxPopularity));
+            g.setColor(Color.CYAN);
+            g.fillRect(x, getHeight() - barHeight - 50, barWidth, barHeight);
+            g.setColor(Color.black);
+            g.drawRect(x, getHeight() - barHeight - 50, barWidth, barHeight);
+            g.drawString(bookNames[i], x, getHeight() - 10); // Display book name at the end of X-axis
+            x += 60; // Adjust for spacing
+        }
+    }
+}
 public class LibraryManagementSystem {
-    public static void main(String[] args) {
-        Library library = new Library();
+    private Library library;
+    private static DefaultTableModel tableModel;
+    private JTable table;
+    public LibraryManagementSystem() {
+        library = new Library();
+        // Create a table to display books
+        String[] columnNames = {"ID", "Title", "Author", "Year", "Popularity Count", "Price"};
+        tableModel = new DefaultTableModel(columnNames, 0);
+        table = new JTable(tableModel);
         loadDataFromFile(library);
-
-        Scanner scanner = new Scanner(System.in);
-        int choice;
-        do {
-            System.out.println("\nLibrary Management System Menu:");
-            System.out.println("1. Add a Publication");
-            System.out.println("2. Edit a Publication");
-            System.out.println("3. Delete a Publication");
-            System.out.println("4. View All Publications");
-            System.out.println("5. View Publication by ID");
-            System.out.println("10. Exit");
-            System.out.print("Enter your choice: ");
-            choice = scanner.nextInt();
-            switch (choice) {
-                case 1:
-                    // Add a Publication
-                    addPublication(scanner, library);
-                    break;
-                case 2:
-                    // Edit a Publication
-                    editPublication(scanner, library);
-                    break;
-                case 3:
-                    // Delete a Publication
-                    deletePublication(scanner, library);
-                    break;
-                case 4:
-                    // View All Publications
-                    displayAllPublications(library);
-                    break;
-                case 5:
-                    System.out.print("Enter Publication ID to View: ");
-                    int idToView = scanner.nextInt();
-                    Publication publicationToView = library.getPublicationById(idToView);
-                    library.displayPublicationDetails(publicationToView);
-                    break;
-                case 10:
-                    // Exit
-                    System.out.println("Exiting Library Management System.");
-                    break;
-                default:
-                    System.out.println("Invalid choice. Please try again.");
+        JFrame frame = new JFrame("Library Management System");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLayout(new BorderLayout());
+        JScrollPane scrollPane = new JScrollPane(table);
+        // Add a mouse motion listener for row highlighting
+        table.addMouseMotionListener(new MouseAdapter() {
+            public void mouseMoved(MouseEvent e) {
+                int row = table.rowAtPoint(e.getPoint());
+                if (row >= 0) {
+                    table.getSelectionModel().setSelectionInterval(row, row);
+                } else {
+                    table.getSelectionModel().clearSelection();
+                }
             }
-        } while (choice != 10);
-        scanner.close();
+    });
+        frame.add(scrollPane, BorderLayout.CENTER);
+        // Create buttons for Add, Edit, Delete
+        JPanel buttonPanel = new JPanel();
+        JButton addButton = new JButton("Add Book");
+        JButton editButton = new JButton("Edit Book");
+        JButton deleteButton = new JButton("Delete Book");
+        JButton viewPopularityButton = new JButton("View Popularity");
+        addButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                // Create a pane to input book details
+                JPanel addBookPanel = new JPanel(new GridLayout(5, 2));
+                JTextField titleField = new JTextField(15);
+                JTextField authorField = new JTextField(15);
+                JTextField yearField = new JTextField(15);
+                JTextField popularityCountField = new JTextField(15);
+                JTextField priceField = new JTextField(15);
+                addBookPanel.add(new JLabel("Title:"));
+                addBookPanel.add(titleField);
+                addBookPanel.add(new JLabel("Author:"));
+                addBookPanel.add(authorField);
+                addBookPanel.add(new JLabel("Year:"));
+                addBookPanel.add(yearField);
+                addBookPanel.add(new JLabel("Popularity Count:"));
+                addBookPanel.add(popularityCountField);
+                addBookPanel.add(new JLabel("Price:"));
+                addBookPanel.add(priceField);
+                int result = JOptionPane.showConfirmDialog(null, addBookPanel, "Add Book", JOptionPane.OK_CANCEL_OPTION);
+                if (result == JOptionPane.OK_OPTION) {
+                    String title = titleField.getText();
+                    String author = authorField.getText();
+                    int year = Integer.parseInt(yearField.getText());
+                    int popularityCount = Integer.parseInt(popularityCountField.getText());
+                    int price = Integer.parseInt(priceField.getText());
+
+                    // Create and add the book
+                    int nextId = tableModel.getRowCount() + 1;
+                    Book newBook = new Book(nextId, title, author, year, popularityCount, price);
+                    library.addPublication(newBook);
+                    // Update the table with the new book
+                    tableModel.addRow(new Object[]{nextId, title, author, year, popularityCount, price});
+                    // Write data to the file (similar to your writeDataToFile method)
+                    writeDataToFile(newBook);
+                }
+            }
+        });
+        editButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String idToEdit = JOptionPane.showInputDialog("Enter the ID of the publication to edit:");
+                int publicationId = Integer.parseInt(idToEdit);
+                Publication publicationToEdit = library.getPublicationById(publicationId);
+                if (publicationToEdit == null) {
+                    JOptionPane.showMessageDialog(null, "Publication not found.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                // Create a panel to input updated details
+                JPanel editPublicationPanel = new JPanel(new GridLayout(5, 2));
+                JTextField titleField = new JTextField(publicationToEdit.getTitle());
+                JTextField authorField = new JTextField(((Book) publicationToEdit).getAuthor());
+                JTextField yearField = new JTextField(String.valueOf(((Book) publicationToEdit).getYear()));
+                JTextField popularityCountField = new JTextField(String.valueOf(((Book) publicationToEdit).getPopularityCount()));
+                JTextField priceField = new JTextField(String.valueOf(((Book) publicationToEdit).getPrice()));
+                editPublicationPanel.add(new JLabel("Title:"));
+                editPublicationPanel.add(titleField);
+                editPublicationPanel.add(new JLabel("Author:"));
+                editPublicationPanel.add(authorField);
+                editPublicationPanel.add(new JLabel("Year:"));
+                editPublicationPanel.add(yearField);
+                editPublicationPanel.add(new JLabel("Popularity Count:"));
+                editPublicationPanel.add(popularityCountField);
+                editPublicationPanel.add(new JLabel("Price:"));
+                editPublicationPanel.add(priceField);
+                int result = JOptionPane.showConfirmDialog(null, editPublicationPanel, "Edit Publication", JOptionPane.OK_CANCEL_OPTION);
+                if (result == JOptionPane.OK_OPTION) {
+                    String updatedTitle = titleField.getText();
+                    String updatedAuthor = authorField.getText();
+                    int updatedYear = Integer.parseInt(yearField.getText());
+                    int updatedPopularityCount = Integer.parseInt(popularityCountField.getText());
+                    int updatedPrice = Integer.parseInt(priceField.getText());
+                    // Update the book details
+                    Book updatedBook = new Book(publicationId, updatedTitle, updatedAuthor, updatedYear, updatedPopularityCount, updatedPrice);
+                    library.editPublication(publicationId, updatedBook);
+                    // Update the data in the file
+                    updateDataInFile(publicationId, updatedBook, updatedTitle);
+                    // Update the display table
+                    int rowIndex = table.convertRowIndexToModel(table.getSelectedRow());
+                    tableModel.setValueAt(updatedTitle, rowIndex, 1);
+                    tableModel.setValueAt(updatedAuthor, rowIndex, 2);
+                    tableModel.setValueAt(updatedYear, rowIndex, 3);
+                    tableModel.setValueAt(updatedPopularityCount, rowIndex, 4);
+                    tableModel.setValueAt(updatedPrice, rowIndex, 5);
+                }
+            }
+        });
+        deleteButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                // Display an input dialog to get the ID from the user
+                String input = JOptionPane.showInputDialog("Enter ID to delete:");
+                // Check if the user canceled the input or left it empty
+                if (input == null || input.isEmpty()) {
+                    return; // Exit the action if no input was provided
+                }
+                try {
+                    int publicationIdToDelete = Integer.parseInt(input);
+                    removeDataFromFile(publicationIdToDelete);
+                    // Delete the publication with the specified ID
+                    DefaultTableModel model = (DefaultTableModel) table.getModel();
+                    int rowCount = model.getRowCount();
+                    int selectedRow = -1;
+                    for (int i = 0; i < rowCount; i++) {
+                        if ((int) model.getValueAt(i, 0) == publicationIdToDelete) {
+                            selectedRow = i;
+                            model.removeRow(i);
+                            break; // Assuming IDs are unique; stop searching once found
+                        }
+                    }
+                    if (selectedRow != -1) {
+                        model.removeRow(selectedRow);
+                        JOptionPane.showMessageDialog(null, "Publication with ID " + publicationIdToDelete + " deleted successfully.");
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Publication with ID " + publicationIdToDelete + " not found.");
+                    }
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(null, "Invalid input. Please enter a valid ID.");
+                }
+            }
+        });
+        viewPopularityButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                // Open a new screen to display the graphical representation
+                displayPopularityChart();
+            }
+        });
+        buttonPanel.add(addButton);
+        buttonPanel.add(editButton);
+        buttonPanel.add(deleteButton);
+        buttonPanel.add(viewPopularityButton);
+        frame.add(buttonPanel, BorderLayout.SOUTH);
+        frame.setSize(800, 400);
+        frame.setVisible(true);
     }
-    private static void addPublication(Scanner scanner, Library library) {
-        scanner.nextLine();
-        System.out.print("Enter Title: ");
-        String title = scanner.nextLine();
-        // Prepare data to write to the file
-        String dataToWrite = null;
-        // Book
-        System.out.print("Enter Author: ");
-        String author = scanner.nextLine();
-        System.out.print("Enter Year: ");
-        int year = scanner.nextInt();
-        System.out.print("Enter Popularity Count: ");
-        int popularityCount = scanner.nextInt();
-        System.out.print("Enter Price: ");
-        int price = scanner.nextInt();
-        int nextId = library.getAllPublications().size() + 1;
-        Book newBook = new Book(nextId, title, author, year, popularityCount, price);
-        library.addPublication(newBook);
-        // Create a formatted string to write to the file
-        dataToWrite = String.format("%d, %s, %s, %d, %d, %d",
-                nextId, title, author, year, popularityCount, price);
-        System.out.println(dataToWrite);
-        System.out.println("Book added successfully.");
-        // Write the data to the file
-        writeDataToFile(dataToWrite);
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                new LibraryManagementSystem();
+            }
+        });
     }
-    private static void writeDataToFile(String dataToWrite) {
-        String filePath = "data.txt";
-        try (PrintWriter writer = new PrintWriter(new FileWriter(filePath, true))) {
-            writer.println(dataToWrite);
+    public void displayPopularityChart() {
+        // Read popularity data from the file
+        int[] popularityData = readPopularityDataFromFile(); // Implement this method to read data
+        String[] bookData=readBookNamesFromFile();
+        if (popularityData != null) {
+            PopularityChartFrame frame = new PopularityChartFrame(popularityData,bookData);
+            frame.setVisible(true);
+        } else {
+            // Handle the case where there is no data to display
+            JOptionPane.showMessageDialog(null, "No popularity data available.");
+        }
+    }
+    private int[] readPopularityDataFromFile() {
+        String filePath = "data.txt"; // Replace with your actual file path
+        List<Integer> popularityDataList = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(", ");
+                if (parts.length >= 6) {
+                    int popularityCount = Integer.parseInt(parts[parts.length - 2]); // Assuming popularity count is in the second-to-last position
+                    popularityDataList.add(popularityCount);
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
+        // Convert the list to an array
+        int[] popularityData = new int[popularityDataList.size()];
+        for (int i = 0; i < popularityDataList.size(); i++) {
+            popularityData[i] = popularityDataList.get(i);
+            System.out.println(popularityData[i]);
+        }
+        return popularityData;
     }
-    private static void editPublication(Scanner scanner, Library library) {
-        System.out.print("Enter Publication ID to Edit: ");
-        int id = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
-        Publication publicationToEdit = library.getPublicationById(id);
-        if (publicationToEdit != null) {
-            System.out.println("Enter New Details:");
-            System.out.print("Enter Title: ");
-            String newTitle = scanner.nextLine();
-            if (publicationToEdit instanceof Book) {
-                // Editing a Book
-                Book bookToEdit = (Book) publicationToEdit;
-                System.out.print("Enter New Author: ");
-                String newAuthor = scanner.nextLine();
-                System.out.print("Enter New Year: ");
-                int newYear = scanner.nextInt();
-                System.out.print("Enter New Popularity Count: ");
-                int newPopularityCount = scanner.nextInt();
-                System.out.print("Enter New Price: ");
-                int newPrice = scanner.nextInt();
-                Book newBook = new Book(id, newTitle, newAuthor, newYear, newPopularityCount, newPrice);
-                library.editPublication(id, newBook);
-                System.out.println("Book edited successfully.");
-                // Update data in the file
-                updateDataInFile(id, newBook, newTitle);
-            } else {
-                System.out.println("Publication with ID " + id + " not found.");
+    private String[] readBookNamesFromFile() {
+        String filePath = "data.txt"; // Replace with your actual file path
+        List<String> bookNames = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(", ");
+                if (parts.length >= 6) {
+                    String bookName = parts[1]; // Assuming book name is in the second position
+                    bookNames.add(bookName);
+                }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        // Convert the list to a string array
+        String[] bookNamesArray = bookNames.toArray(new String[0]);
+        return bookNamesArray;
+    }
+    private static void writeDataToFile(Book book) {
+        String filePath = "data.txt";
+        try (FileWriter writer = new FileWriter(filePath, true); BufferedWriter bufferedWriter = new BufferedWriter(writer); PrintWriter printWriter = new PrintWriter(bufferedWriter)) {
+            // Format the data as a comma-separated string
+            String dataToWrite = String.format("%d, %s, %s, %d, %d, %d",
+                    book.getId(), book.getTitle(), book.getAuthor(), book.getYear(), book.getPopularityCount(), book.getPrice());
+
+            // Write the formatted data to the file
+            printWriter.println(dataToWrite);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
     private static void updateDataInFile(int bookId, Book newBook, String newTitle) {
@@ -286,19 +419,6 @@ public class LibraryManagementSystem {
             throw new RuntimeException(e);
         }
     }
-    private static void deletePublication(Scanner scanner, Library library) {
-        System.out.print("Enter Publication ID to Delete: ");
-        int id = scanner.nextInt();
-        boolean deleted = library.deletePublication(id);
-        if (deleted) {
-            // Notify the user
-            System.out.println("Publication with ID " + id + " deleted successfully.");
-            // Remove the data from the file
-            removeDataFromFile(id);
-        } else {
-            System.out.println("Publication with ID " + id + " not found.");
-        }
-    }
     private static void removeDataFromFile(int id) {
         String filePath = "data.txt";
         List<String> newLines = new ArrayList<>();
@@ -323,7 +443,6 @@ public class LibraryManagementSystem {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
-
         // Write the updated data (all lines except the deleted one) back to the file
         try (PrintWriter writer = new PrintWriter(new FileWriter(filePath, false))) {
             for (String newLine : newLines) {
@@ -332,19 +451,6 @@ public class LibraryManagementSystem {
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
-        }
-    }
-
-    private static void displayAllPublications( Library library) {
-        System.out.println("All Publications:");
-        // Load data from the file if the library is empty
-        if (library.getAllPublications().isEmpty()) {
-            loadDataFromFile(library);
-        }
-        // Display all publications
-        List<Publication> allPublications = library.getAllPublications();
-        for (Publication publication : allPublications) {
-            publication.displayInfo();
         }
     }
     private static void loadDataFromFile(Library library) {
@@ -371,6 +477,7 @@ public class LibraryManagementSystem {
                 int nextId = library.getAllPublications().size() + 1;
                 Book book = new Book(nextId, title, author, year, popularityCount, price);
                 library.addPublication(book);
+                tableModel.addRow(new Object[]{id, title, author, year, popularityCount, price});
             }
         } catch (IOException e) {
             e.printStackTrace();
