@@ -386,19 +386,85 @@ public class LibraryManagementSystem {
         textArea.setLineWrap(true);
         textArea.setCaretPosition(0);
         textArea.setEditable(false); // Make the text area read-only
+        //a book will have no content when not included in if statement but is in file
         String bookContent = "no content";
         // Create a JScrollPane for the text area
         JScrollPane scrollPane = new JScrollPane(textArea);
-            if(bookTitle.equals("book title"))
+        //this is to test the scroll bar as large content is placed in this book
+            if(bookTitle.equals("Agricultural Evolution"))
             {
                 bookContent = "This is the content of the book titled '" + bookTitle + "'.\n\n" +
-                        "hello123";
+                        "Chapter 1: Introduction to Urban Agriculture\n" +
+                        "\n" +
+                        "Overview of urban agriculture\n" +
+                        "Historical context and growth\n" +
+                        "Importance in modern cities\n\n" +
+                        "Chapter 2: Types of Urban Agriculture\n\n" +
+                        "\n" +
+                        "Community gardens\n" +
+                        "Rooftop gardens\n" +
+                        "Vertical farming\n" +
+                        "Hydroponics and aquaponics\n" +
+                        "Guerrilla gardening\n\n" +
+                        "Chapter 3: Benefits of Urban Agriculture\n\n" +
+                        "\n" +
+                        "Access to fresh produce\n" +
+                        "Economic opportunities\n" +
+                        "Environmental benefits\n" +
+                        "Social and community cohesion\n" +
+                        "Educational value\n\n" +
+                        "Chapter 4: Challenges and Barriers\n\n" +
+                        "\n" +
+                        "Space limitations\n" +
+                        "Soil quality and contamination\n" +
+                        "Zoning and legal issues\n" +
+                        "Water and resource constraints\n" +
+                        "Education and awareness\n\n" +
+                        "Chapter 5: Case Studies\n\n" +
+                        "\n" +
+                        "Urban farming in New York City\n" +
+                        "Vertical farming in Singapore\n" +
+                        "Community gardens in Berlin\n" +
+                        "Rooftop gardens in Tokyo\n" +
+                        "Hydroponics in Los Angeles\n\n" +
+                        "Chapter 6: Technological Innovations\n\n" +
+                        "\n" +
+                        "IoT in urban agriculture\n" +
+                        "Automated vertical farming systems\n" +
+                        "Sustainable practices\n" +
+                        "Data-driven agriculture\n" +
+                        "AI for crop management\n\n" +
+                        "Chapter 7: Future Trends\n\n" +
+                        "\n" +
+                        "Urban agriculture in smart cities\n" +
+                        "Integration with urban planning\n" +
+                        "Expanding food sovereignty\n" +
+                        "Reducing food miles\n" +
+                        "Policy and government support\n\n" +
+                        "Chapter 8: Sustainability and Environmental Impact\n\n" +
+                        "\n" +
+                        "Reducing food waste\n" +
+                        "Carbon footprint reduction\n" +
+                        "Biodiversity and urban ecosystems\n" +
+                        "Sustainable agriculture practices\n\n" +
+                        "Chapter 9: Community Engagement and Education\n\n" +
+                        "\n" +
+                        "Involving youth and schools\n" +
+                        "Public awareness campaigns\n" +
+                        "Workshops and training programs\n\n" +
+                        "Chapter 10: Success Stories\n\n" +
+                        "\n" +
+                        "Individuals and communities making a difference\n" +
+                        "Economic success stories\n" +
+                        "Transforming neighborhoods";
             }
+            //just a simple content
             else if (bookTitle.equals("novel title"))
             {
                 bookContent = "This is the content of the book titled '" + bookTitle + "'.\n\n" +
                         "hello123456";
             }
+            //just a simple content
             else if(bookTitle.equals("self book"))
             {
                 bookContent = "This is the content of the book titled '" + bookTitle + "'.\n\n" +
