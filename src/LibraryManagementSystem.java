@@ -387,7 +387,8 @@ public class LibraryManagementSystem {
         textArea.setCaretPosition(0);
         textArea.setEditable(false); // Make the text area read-only
         //a book will have no content when not included in if statement but is in file
-        String bookContent = "no content";
+        String bookContent = "This is the content of the book titled '" + bookTitle + "'.\n\n" +
+                "-------------no content-----------";
         // Create a JScrollPane for the text area
         JScrollPane scrollPane = new JScrollPane(textArea);
         //this is to test the scroll bar as large content is placed in this book
