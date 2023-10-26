@@ -156,7 +156,6 @@ class ButtonRenderer extends JButton implements TableCellRenderer {
         return this;
     }
 }
-
 public class LibraryManagementSystem {
     private Library library;
     private static DefaultTableModel tableModel;
@@ -332,7 +331,6 @@ public class LibraryManagementSystem {
                     openBookContentWindow(bookTitle);
                 });
             }
-
             public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
                 if (isSelected) {
                     button.setForeground(table.getSelectionForeground());
@@ -346,7 +344,6 @@ public class LibraryManagementSystem {
                 isPushed = true;
                 return button;
             }
-
             public Object getCellEditorValue() {
                 if (isPushed) {
                     // Perform the "Read" button action, if needed
@@ -355,12 +352,10 @@ public class LibraryManagementSystem {
                 isPushed = false;
                 return label;
             }
-
             public boolean stopCellEditing() {
                 isPushed = false;
                 return super.stopCellEditing();
             }
-
             protected void fireEditingStopped() {
                 super.fireEditingStopped();
             }
@@ -369,7 +364,6 @@ public class LibraryManagementSystem {
         JButton readButton = new JButton("Read");
         table.getColumnModel().getColumn(6).setCellRenderer(new ButtonRenderer());
         table.getColumnModel().getColumn(6).setCellEditor(new ButtonEditor(new JCheckBox()));
-
         buttonPanel.add(addButton);
         buttonPanel.add(editButton);
         buttonPanel.add(deleteButton);
@@ -392,78 +386,25 @@ public class LibraryManagementSystem {
         textArea.setLineWrap(true);
         textArea.setCaretPosition(0);
         textArea.setEditable(false); // Make the text area read-only
-
+        String bookContent = "no content";
         // Create a JScrollPane for the text area
         JScrollPane scrollPane = new JScrollPane(textArea);
-
-        // Load book content here; you can read the content from a file or database
-        String bookContent = "This is the content of the book titled '" + bookTitle + "'.\n\n" +
-                "Chapter 1: Introduction to Urban Agriculture\n" +
-                "\n" +
-                "Overview of urban agriculture\n" +
-                "Historical context and growth\n" +
-                "Importance in modern cities\n" +
-                "Chapter 2: Types of Urban Agriculture\n" +
-                "\n" +
-                "Community gardens\n" +
-                "Rooftop gardens\n" +
-                "Vertical farming\n" +
-                "Hydroponics and aquaponics\n" +
-                "Guerrilla gardening\n" +
-                "Chapter 3: Benefits of Urban Agriculture\n" +
-                "\n" +
-                "Access to fresh produce\n" +
-                "Economic opportunities\n" +
-                "Environmental benefits\n" +
-                "Social and community cohesion\n" +
-                "Educational value\n" +
-                "Chapter 4: Challenges and Barriers\n" +
-                "\n" +
-                "Space limitations\n" +
-                "Soil quality and contamination\n" +
-                "Zoning and legal issues\n" +
-                "Water and resource constraints\n" +
-                "Education and awareness\n" +
-                "Chapter 5: Case Studies\n" +
-                "\n" +
-                "Urban farming in New York City\n" +
-                "Vertical farming in Singapore\n" +
-                "Community gardens in Berlin\n" +
-                "Rooftop gardens in Tokyo\n" +
-                "Hydroponics in Los Angeles\n" +
-                "Chapter 6: Technological Innovations\n" +
-                "\n" +
-                "IoT in urban agriculture\n" +
-                "Automated vertical farming systems\n" +
-                "Sustainable practices\n" +
-                "Data-driven agriculture\n" +
-                "AI for crop management\n" +
-                "Chapter 7: Future Trends\n" +
-                "\n" +
-                "Urban agriculture in smart cities\n" +
-                "Integration with urban planning\n" +
-                "Expanding food sovereignty\n" +
-                "Reducing food miles\n" +
-                "Policy and government support\n" +
-                "Chapter 8: Sustainability and Environmental Impact\n" +
-                "\n" +
-                "Reducing food waste\n" +
-                "Carbon footprint reduction\n" +
-                "Biodiversity and urban ecosystems\n" +
-                "Sustainable agriculture practices\n" +
-                "Chapter 9: Community Engagement and Education\n" +
-                "\n" +
-                "Involving youth and schools\n" +
-                "Public awareness campaigns\n" +
-                "Workshops and training programs\n" +
-                "Chapter 10: Success Stories\n" +
-                "\n" +
-                "Individuals and communities making a difference\n" +
-                "Economic success stories\n" +
-                "Transforming neighborhoods";
-
+            if(bookTitle.equals("book title"))
+            {
+                bookContent = "This is the content of the book titled '" + bookTitle + "'.\n\n" +
+                        "hello123";
+            }
+            else if (bookTitle.equals("novel title"))
+            {
+                bookContent = "This is the content of the book titled '" + bookTitle + "'.\n\n" +
+                        "hello123456";
+            }
+            else if(bookTitle.equals("self book"))
+            {
+                bookContent = "This is the content of the book titled '" + bookTitle + "'.\n\n" +
+                        "hello1234567890";
+            }
         textArea.setText(bookContent);
-
         bookContentFrame.add(scrollPane);
         bookContentFrame.pack();
         bookContentFrame.setVisible(true);
@@ -515,7 +456,6 @@ public class LibraryManagementSystem {
         int[] popularityData = new int[popularityDataList.size()];
         for (int i = 0; i < popularityDataList.size(); i++) {
             popularityData[i] = popularityDataList.get(i);
-            System.out.println(popularityData[i]);
         }
         return popularityData;
     }
