@@ -1,10 +1,8 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.io.*;
 import java.util.Arrays;
 import java.util.List;
@@ -139,6 +137,26 @@ class PopularityChartFrame extends JFrame {
         }
     }
 }
+class ButtonRenderer extends JButton implements TableCellRenderer {
+    private boolean isPushed;
+    public ButtonRenderer() {
+        setOpaque(true);
+        setText("Read");
+    }
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        if (isSelected) {
+            setForeground(table.getSelectionForeground());
+            setBackground(table.getSelectionBackground());
+        } else {
+            setForeground(table.getForeground());
+            setBackground(UIManager.getColor("Button.background"));
+        }
+        setText("Read");
+        isPushed = true;
+        return this;
+    }
+}
+
 public class LibraryManagementSystem {
     private Library library;
     private static DefaultTableModel tableModel;
@@ -146,7 +164,7 @@ public class LibraryManagementSystem {
     public LibraryManagementSystem() {
         library = new Library();
         // Create a table to display books
-        String[] columnNames = {"ID", "Title", "Author", "Year", "Popularity Count", "Price"};
+        String[] columnNames = {"ID", "Title", "Author", "Year", "Popularity Count", "Price", "Read Item"};
         tableModel = new DefaultTableModel(columnNames, 0);
         table = new JTable(tableModel);
         loadDataFromFile(library);
@@ -297,6 +315,61 @@ public class LibraryManagementSystem {
                 displayPopularityChart();
             }
         });
+        class ButtonEditor extends DefaultCellEditor {
+            protected JButton button;
+
+            private String label;
+            private boolean isPushed;
+
+            public ButtonEditor(JCheckBox checkBox) {
+                super(checkBox);
+                button = new JButton();
+                button.setOpaque(true);
+                button.addActionListener(e -> {
+                    // Handle the "Read" button click here
+                    int row = table.getSelectedRow();
+                    String bookTitle = tableModel.getValueAt(row, 1).toString();
+                    openBookContentWindow(bookTitle);
+                });
+            }
+
+            public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+                if (isSelected) {
+                    button.setForeground(table.getSelectionForeground());
+                    button.setBackground(table.getSelectionBackground());
+                } else {
+                    button.setForeground(table.getForeground());
+                    button.setBackground(table.getBackground());
+                }
+                label = (value == null) ? "Read" : value.toString();
+                button.setText(label);
+                isPushed = true;
+                return button;
+            }
+
+            public Object getCellEditorValue() {
+                if (isPushed) {
+                    // Perform the "Read" button action, if needed
+                    // Note: The action is handled in the actionPerformed method.
+                }
+                isPushed = false;
+                return label;
+            }
+
+            public boolean stopCellEditing() {
+                isPushed = false;
+                return super.stopCellEditing();
+            }
+
+            protected void fireEditingStopped() {
+                super.fireEditingStopped();
+            }
+        }
+        // Add the "Read" button column to the table
+        JButton readButton = new JButton("Read");
+        table.getColumnModel().getColumn(6).setCellRenderer(new ButtonRenderer());
+        table.getColumnModel().getColumn(6).setCellEditor(new ButtonEditor(new JCheckBox()));
+
         buttonPanel.add(addButton);
         buttonPanel.add(editButton);
         buttonPanel.add(deleteButton);
@@ -309,6 +382,104 @@ public class LibraryManagementSystem {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 new LibraryManagementSystem();
+            }
+        });
+    }
+    public static void openBookContentWindow(String bookTitle) {
+        JFrame bookContentFrame = new JFrame(bookTitle + " - Read Book");
+        JTextArea textArea = new JTextArea(20, 60);
+        textArea.setWrapStyleWord(true);
+        textArea.setLineWrap(true);
+        textArea.setCaretPosition(0);
+        textArea.setEditable(false); // Make the text area read-only
+
+        // Create a JScrollPane for the text area
+        JScrollPane scrollPane = new JScrollPane(textArea);
+
+        // Load book content here; you can read the content from a file or database
+        String bookContent = "This is the content of the book titled '" + bookTitle + "'.\n\n" +
+                "Chapter 1: Introduction to Urban Agriculture\n" +
+                "\n" +
+                "Overview of urban agriculture\n" +
+                "Historical context and growth\n" +
+                "Importance in modern cities\n" +
+                "Chapter 2: Types of Urban Agriculture\n" +
+                "\n" +
+                "Community gardens\n" +
+                "Rooftop gardens\n" +
+                "Vertical farming\n" +
+                "Hydroponics and aquaponics\n" +
+                "Guerrilla gardening\n" +
+                "Chapter 3: Benefits of Urban Agriculture\n" +
+                "\n" +
+                "Access to fresh produce\n" +
+                "Economic opportunities\n" +
+                "Environmental benefits\n" +
+                "Social and community cohesion\n" +
+                "Educational value\n" +
+                "Chapter 4: Challenges and Barriers\n" +
+                "\n" +
+                "Space limitations\n" +
+                "Soil quality and contamination\n" +
+                "Zoning and legal issues\n" +
+                "Water and resource constraints\n" +
+                "Education and awareness\n" +
+                "Chapter 5: Case Studies\n" +
+                "\n" +
+                "Urban farming in New York City\n" +
+                "Vertical farming in Singapore\n" +
+                "Community gardens in Berlin\n" +
+                "Rooftop gardens in Tokyo\n" +
+                "Hydroponics in Los Angeles\n" +
+                "Chapter 6: Technological Innovations\n" +
+                "\n" +
+                "IoT in urban agriculture\n" +
+                "Automated vertical farming systems\n" +
+                "Sustainable practices\n" +
+                "Data-driven agriculture\n" +
+                "AI for crop management\n" +
+                "Chapter 7: Future Trends\n" +
+                "\n" +
+                "Urban agriculture in smart cities\n" +
+                "Integration with urban planning\n" +
+                "Expanding food sovereignty\n" +
+                "Reducing food miles\n" +
+                "Policy and government support\n" +
+                "Chapter 8: Sustainability and Environmental Impact\n" +
+                "\n" +
+                "Reducing food waste\n" +
+                "Carbon footprint reduction\n" +
+                "Biodiversity and urban ecosystems\n" +
+                "Sustainable agriculture practices\n" +
+                "Chapter 9: Community Engagement and Education\n" +
+                "\n" +
+                "Involving youth and schools\n" +
+                "Public awareness campaigns\n" +
+                "Workshops and training programs\n" +
+                "Chapter 10: Success Stories\n" +
+                "\n" +
+                "Individuals and communities making a difference\n" +
+                "Economic success stories\n" +
+                "Transforming neighborhoods";
+
+        textArea.setText(bookContent);
+
+        bookContentFrame.add(scrollPane);
+        bookContentFrame.pack();
+        bookContentFrame.setVisible(true);
+        bookContentFrame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                int confirm = JOptionPane.showOptionDialog(
+                        bookContentFrame, "Are you sure you want to close this book?", "Confirmation", JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE, null, null, null);
+
+                if (confirm == JOptionPane.YES_OPTION) {
+                    bookContentFrame.dispose();
+                } else if (confirm == JOptionPane.NO_OPTION) {
+                    openBookContentWindow(bookTitle);
+                    // Do nothing, bookContentFrame will remain open
+                }
             }
         });
     }

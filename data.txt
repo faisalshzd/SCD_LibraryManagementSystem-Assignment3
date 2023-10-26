@@ -2,4 +2,3 @@
 2, novel title, author4_name, 1985, 2, 350
 3, self book, author9_name, 2005, 3, 250
 4, book13, author13, 2019, 1, 123
-5, book90, author90, 2019, 3, 230
