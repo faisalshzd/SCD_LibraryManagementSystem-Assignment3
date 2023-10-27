@@ -4,9 +4,8 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.ArrayList;
 interface Configuration {
     void displayInfo();
 }
@@ -29,12 +28,26 @@ abstract class Publication implements Configuration {
         System.out.println("ID: " + id );
         System.out.println("Title: " + title);
     }
+    @Override
+    public String toString() {
+        return "ID: " + getId() +
+                "\nTitle: " + getTitle();
+    }
 }
 class Book extends Publication {
     private String author;
     private int year;
     private int popularityCount;
     private int price;
+    public static Map<String, String> content = new HashMap<>();
+    public Book(int id, String title, String author, int year, int popularityCount, int price,String content) {
+        super(id, title);
+        this.author = author;
+        this.year = year;
+        this.popularityCount = popularityCount;
+        this.price = price;
+        this.content.put(title,content);
+    }
     public Book(int id, String title, String author, int year, int popularityCount, int price) {
         super(id, title);
         this.author = author;
@@ -54,6 +67,9 @@ class Book extends Publication {
     public int getPrice() {
         return price;
     }
+    public static Map getContent(){
+        return content;
+    }
     @Override
     public void displayInfo() {
         super.displayInfo();
@@ -61,6 +77,15 @@ class Book extends Publication {
         System.out.println("Year: " + year);
         System.out.println("Popularity Count: " + popularityCount);
         System.out.println("Price: $" + price);
+    }
+    @Override
+    public String toString() {
+        return "ID: " + getId() +
+                "\nTitle: " + getTitle() +
+                "\nAuthor: " + author +
+                "\nYear: " + year +
+                "\nPopularity Count: " + popularityCount +
+                "\nPrice: $" + price;
     }
 }
 class Library {
@@ -71,7 +96,9 @@ class Library {
     public boolean editPublication(int id, Publication newPublication) {
         for (int i = 0; i < publications.size(); i++) {
             if (publications.get(i).getId() == id) {
+                System.out.println(newPublication);
                 publications.set(i, newPublication);
+                System.out.println(publications);
                 return true;
             }
         }
@@ -183,7 +210,7 @@ public class LibraryManagementSystem {
             }
     });
         frame.add(scrollPane, BorderLayout.CENTER);
-        // Create buttons for Add, Edit, Delete
+        // Create buttons for Add, Edit, Delete and View Popularity
         JPanel buttonPanel = new JPanel();
         JButton addButton = new JButton("Add Book");
         JButton editButton = new JButton("Edit Book");
@@ -209,16 +236,19 @@ public class LibraryManagementSystem {
                 addBookPanel.add(new JLabel("Price:"));
                 addBookPanel.add(priceField);
                 int result = JOptionPane.showConfirmDialog(null, addBookPanel, "Add Book", JOptionPane.OK_CANCEL_OPTION);
+                System.out.println("Enter the content of this book");
+                Scanner in= new Scanner(System.in);
+                String content=in.nextLine();
+                System.out.println("Content written successfully!");
                 if (result == JOptionPane.OK_OPTION) {
                     String title = titleField.getText();
                     String author = authorField.getText();
                     int year = Integer.parseInt(yearField.getText());
                     int popularityCount = Integer.parseInt(popularityCountField.getText());
                     int price = Integer.parseInt(priceField.getText());
-
                     // Create and add the book
                     int nextId = tableModel.getRowCount() + 1;
-                    Book newBook = new Book(nextId, title, author, year, popularityCount, price);
+                    Book newBook = new Book(nextId, title, author, year, popularityCount, price,content);
                     library.addPublication(newBook);
                     // Update the table with the new book
                     tableModel.addRow(new Object[]{nextId, title, author, year, popularityCount, price});
@@ -231,47 +261,60 @@ public class LibraryManagementSystem {
             public void actionPerformed(ActionEvent e) {
                 String idToEdit = JOptionPane.showInputDialog("Enter the ID of the publication to edit:");
                 int publicationId = Integer.parseInt(idToEdit);
+                //System.out.println(publicationId);
                 Publication publicationToEdit = library.getPublicationById(publicationId);
+                //System.out.println(publicationId);
                 if (publicationToEdit == null) {
                     JOptionPane.showMessageDialog(null, "Publication not found.", "Error", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                // Create a panel to input updated details
-                JPanel editPublicationPanel = new JPanel(new GridLayout(5, 2));
-                JTextField titleField = new JTextField(publicationToEdit.getTitle());
-                JTextField authorField = new JTextField(((Book) publicationToEdit).getAuthor());
-                JTextField yearField = new JTextField(String.valueOf(((Book) publicationToEdit).getYear()));
-                JTextField popularityCountField = new JTextField(String.valueOf(((Book) publicationToEdit).getPopularityCount()));
-                JTextField priceField = new JTextField(String.valueOf(((Book) publicationToEdit).getPrice()));
-                editPublicationPanel.add(new JLabel("Title:"));
-                editPublicationPanel.add(titleField);
-                editPublicationPanel.add(new JLabel("Author:"));
-                editPublicationPanel.add(authorField);
-                editPublicationPanel.add(new JLabel("Year:"));
-                editPublicationPanel.add(yearField);
-                editPublicationPanel.add(new JLabel("Popularity Count:"));
-                editPublicationPanel.add(popularityCountField);
-                editPublicationPanel.add(new JLabel("Price:"));
-                editPublicationPanel.add(priceField);
-                int result = JOptionPane.showConfirmDialog(null, editPublicationPanel, "Edit Publication", JOptionPane.OK_CANCEL_OPTION);
-                if (result == JOptionPane.OK_OPTION) {
-                    String updatedTitle = titleField.getText();
-                    String updatedAuthor = authorField.getText();
-                    int updatedYear = Integer.parseInt(yearField.getText());
-                    int updatedPopularityCount = Integer.parseInt(popularityCountField.getText());
-                    int updatedPrice = Integer.parseInt(priceField.getText());
-                    // Update the book details
-                    Book updatedBook = new Book(publicationId, updatedTitle, updatedAuthor, updatedYear, updatedPopularityCount, updatedPrice);
-                    library.editPublication(publicationId, updatedBook);
-                    // Update the data in the file
-                    updateDataInFile(publicationId, updatedBook, updatedTitle);
-                    // Update the display table
-                    int rowIndex = table.convertRowIndexToModel(table.getSelectedRow());
-                    tableModel.setValueAt(updatedTitle, rowIndex, 1);
-                    tableModel.setValueAt(updatedAuthor, rowIndex, 2);
-                    tableModel.setValueAt(updatedYear, rowIndex, 3);
-                    tableModel.setValueAt(updatedPopularityCount, rowIndex, 4);
-                    tableModel.setValueAt(updatedPrice, rowIndex, 5);
+
+                if (publicationToEdit instanceof Book) {
+                    // Create a panel to input updated details
+                    JPanel editPublicationPanel = new JPanel(new GridLayout(5, 2));
+                    JTextField titleField = new JTextField(publicationToEdit.getTitle());
+                    JTextField authorField = new JTextField(((Book) publicationToEdit).getAuthor());
+                    JTextField yearField = new JTextField(String.valueOf(((Book) publicationToEdit).getYear()));
+                    JTextField popularityCountField = new JTextField(String.valueOf(((Book) publicationToEdit).getPopularityCount()));
+                    JTextField priceField = new JTextField(String.valueOf(((Book) publicationToEdit).getPrice()));
+                    editPublicationPanel.add(new JLabel("Title:"));
+                    editPublicationPanel.add(titleField);
+                    editPublicationPanel.add(new JLabel("Author:"));
+                    editPublicationPanel.add(authorField);
+                    editPublicationPanel.add(new JLabel("Year:"));
+                    editPublicationPanel.add(yearField);
+                    editPublicationPanel.add(new JLabel("Popularity Count:"));
+                    editPublicationPanel.add(popularityCountField);
+                    editPublicationPanel.add(new JLabel("Price:"));
+                    editPublicationPanel.add(priceField);
+                    int result = JOptionPane.showConfirmDialog(null, editPublicationPanel, "Edit Publication", JOptionPane.OK_CANCEL_OPTION);
+                   //System.out.println(result);
+                    if (result == JOptionPane.OK_OPTION) {
+                        String updatedTitle = titleField.getText();
+                        //System.out.println(updatedTitle);
+                        String updatedAuthor = authorField.getText();
+                        //System.out.println(updatedAuthor);
+                        int updatedYear = Integer.parseInt(yearField.getText());
+                        //System.out.println(updatedYear);
+                        int updatedPopularityCount = Integer.parseInt(popularityCountField.getText());
+                        //System.out.println(updatedPopularityCount);
+                        int updatedPrice = Integer.parseInt(priceField.getText());
+                        //System.out.println(updatedPrice);
+                        // Update the book details
+                        Book updatedBook = new Book(publicationId, updatedTitle, updatedAuthor, updatedYear, updatedPopularityCount, updatedPrice);
+                        //System.out.println(updatedBook);
+                        library.editPublication(publicationId, updatedBook);
+                        // Update the data in the file
+                        updateDataInFile(publicationId, updatedBook, updatedTitle);
+                        // Update the display table
+                        int rowIndex = table.convertRowIndexToModel(publicationId-1);
+                        //System.out.println(rowIndex);
+                        tableModel.setValueAt(updatedTitle, rowIndex, 1);
+                        tableModel.setValueAt(updatedAuthor, rowIndex, 2);
+                        tableModel.setValueAt(updatedYear, rowIndex, 3);
+                        tableModel.setValueAt(updatedPopularityCount, rowIndex, 4);
+                        tableModel.setValueAt(updatedPrice, rowIndex, 5);
+                    }
                 }
             }
         });
@@ -298,8 +341,8 @@ public class LibraryManagementSystem {
                         }
                     }
                     if (selectedRow != -1) {
-                        model.removeRow(selectedRow);
                         JOptionPane.showMessageDialog(null, "Publication with ID " + publicationIdToDelete + " deleted successfully.");
+                        reloadTable();
                     } else {
                         JOptionPane.showMessageDialog(null, "Publication with ID " + publicationIdToDelete + " not found.");
                     }
@@ -316,10 +359,8 @@ public class LibraryManagementSystem {
         });
         class ButtonEditor extends DefaultCellEditor {
             protected JButton button;
-
             private String label;
             private boolean isPushed;
-
             public ButtonEditor(JCheckBox checkBox) {
                 super(checkBox);
                 button = new JButton();
@@ -328,7 +369,8 @@ public class LibraryManagementSystem {
                     // Handle the "Read" button click here
                     int row = table.getSelectedRow();
                     String bookTitle = tableModel.getValueAt(row, 1).toString();
-                    openBookContentWindow(bookTitle);
+                    Map<String, String> resultMap = Book.getContent();
+                    openBookContentWindow(bookTitle,resultMap);
                 });
             }
             public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
@@ -346,8 +388,6 @@ public class LibraryManagementSystem {
             }
             public Object getCellEditorValue() {
                 if (isPushed) {
-                    // Perform the "Read" button action, if needed
-                    // Note: The action is handled in the actionPerformed method.
                 }
                 isPushed = false;
                 return label;
@@ -360,8 +400,6 @@ public class LibraryManagementSystem {
                 super.fireEditingStopped();
             }
         }
-        // Add the "Read" button column to the table
-        JButton readButton = new JButton("Read");
         table.getColumnModel().getColumn(6).setCellRenderer(new ButtonRenderer());
         table.getColumnModel().getColumn(6).setCellEditor(new ButtonEditor(new JCheckBox()));
         buttonPanel.add(addButton);
@@ -379,7 +417,11 @@ public class LibraryManagementSystem {
             }
         });
     }
-    public static void openBookContentWindow(String bookTitle) {
+    public void reloadTable(){
+        main(null);
+    }
+    public static void openBookContentWindow(String bookTitle,Map<String, String> content)
+ {
         JFrame bookContentFrame = new JFrame(bookTitle + " - Read Book");
         JTextArea textArea = new JTextArea(20, 60);
         textArea.setWrapStyleWord(true);
@@ -387,8 +429,7 @@ public class LibraryManagementSystem {
         textArea.setCaretPosition(0);
         textArea.setEditable(false); // Make the text area read-only
         //a book will have no content when not included in if statement but is in file
-        String bookContent = "This is the content of the book titled '" + bookTitle + "'.\n\n" +
-                "-------------no content-----------";
+        String bookContent = null;
         // Create a JScrollPane for the text area
         JScrollPane scrollPane = new JScrollPane(textArea);
         //this is to test the scroll bar as large content is placed in this book
@@ -471,6 +512,12 @@ public class LibraryManagementSystem {
                 bookContent = "This is the content of the book titled '" + bookTitle + "'.\n\n" +
                         "hello1234567890";
             }
+            //Show the content entered by user when he adds a new book
+            else{
+
+                bookContent = "This is the content of the book titled '" + bookTitle + "'.\n\n" +
+                        content.get(bookTitle);
+            }
         textArea.setText(bookContent);
         bookContentFrame.add(scrollPane);
         bookContentFrame.pack();
@@ -485,7 +532,8 @@ public class LibraryManagementSystem {
                 if (confirm == JOptionPane.YES_OPTION) {
                     bookContentFrame.dispose();
                 } else if (confirm == JOptionPane.NO_OPTION) {
-                    openBookContentWindow(bookTitle);
+                    Map<String, String> resultMap = Book.getContent();
+                    openBookContentWindow(bookTitle,resultMap);
                     // Do nothing, bookContentFrame will remain open
                 }
             }
@@ -529,7 +577,6 @@ public class LibraryManagementSystem {
     private String[] readBookNamesFromFile() {
         String filePath = "data.txt"; // Replace with your actual file path
         List<String> bookNames = new ArrayList<>();
-
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -552,7 +599,6 @@ public class LibraryManagementSystem {
             // Format the data as a comma-separated string
             String dataToWrite = String.format("%d, %s, %s, %d, %d, %d",
                     book.getId(), book.getTitle(), book.getAuthor(), book.getYear(), book.getPopularityCount(), book.getPrice());
-
             // Write the formatted data to the file
             printWriter.println(dataToWrite);
         } catch (IOException e) {
@@ -653,7 +699,8 @@ public class LibraryManagementSystem {
                 int year = Integer.parseInt(parts[3]);
                 // Create and add the book to the library
                 int nextId = library.getAllPublications().size() + 1;
-                Book book = new Book(nextId, title, author, year, popularityCount, price);
+                String content=null;
+                Book book = new Book(nextId, title, author, year, popularityCount, price,content);
                 library.addPublication(book);
                 tableModel.addRow(new Object[]{id, title, author, year, popularityCount, price});
             }
